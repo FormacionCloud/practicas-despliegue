@@ -1,7 +1,7 @@
 * EC2 Image Builder: creación y gestión automatizada de AMIs
 #+begin_quote
 [!important]
-Esta práctica la realizaremos en una cuenta gratuita de AWS.
+Esta práctica la realizaremos en una *cuenta gratuita* de AWS.
 #+end_quote
 
 * Documentación y recursos adicionales
