@@ -1,0 +1,98 @@
+* EC2 Image Builder: creación y gestión automatizada de AMIs
+#+begin_quote
+[!important]
+Esta práctica la realizaremos en una cuenta gratuita de AWS.
+#+end_quote
+
+* Documentación y recursos adicionales
+- [[https://docs.aws.amazon.com/imagebuilder/latest/userguide/what-is-image-builder.html][Guía de usuario de Image Builder]]
+
+* Prerrequisitos
+** Rol de ejecución para instancias
+Para poder realizar esta práctica, deberás crear un *rol de IAM* para que las instancias que lance el servicio EC2 Image Builder puedan hacer las acciones que vamos a configurar. Para ello, sigue los siguientes pasos:
+1. Accede al servicio *IAM*.
+2. Selecciona la opción *Roles* del menú.
+3. Pulsa en el botón ~Create role~. En la ventana que se abre, selecciona la opción ~AWS service~ y a continuación elige ~EC2~.
+  [[./imagenes/rol1.png]]
+4. En la pantalla de ~Add permissions~, busca y selecciona las siguientes *políticas administradas*, tal como se indica en la [[https://docs.aws.amazon.com/imagebuilder/latest/userguide/security_iam_service-with-iam.html#security_iam_id-based-policy-examples][documentación relacionada]]:
+   - ~EC2InstanceProfileForImageBuilder~
+   - ~EC2InstanceProfileForImageBuilderECRContainerBuilds~
+   - ~AmazonSSMManagedInstanceCore~
+   [[./imagenes/rol2.png]]
+   [[./imagenes/rol3.png]]
+5. En la pantalla final, asigna un *nombre* al rol que incluya tu *nombre y apellidos* y *comprueba que has incluido las 3 políticas anteriores*:
+  [[./imagenes/rol4.png]]
+
+** VPC
+Para esta práctica crearemos una *VPC* que tenga una *subred pública* para que las instancias que lance Image Builder puedan conectarse al servicio sin problema. No es la manera más elegante, pero cumple la función ;)
+
+Debes crear una *VPC sencilla*, que tenga una *subred pública*. No es necesario que tenga subredes privadas ni puntos de acceso.
+
+En principio no es necesario crear ningún grupo de seguridad, ya que la instancia no recibirá tráfico del exterior. Podemos utilizar el grupo de seguridad por defecto incluido en las VPCs.
+
+Asegúrate de *configurar la subred* para activar la opción ~Enable auto-assign public IPv4 address~. De esta manera, las máquinas que se lancen en esa subred recibirán una *IP pública*. Esto es necesario para que la máquina pueda ser controlable mediante el servicio de Systems Manager, que utiliza Image Builder para realizar la automatización.
+[[./imagenes/vpc1.png]]
+
+* Instrucciones
+- Esta práctica la realizaremos en una *cuenta real* (gratuita) de AWS, dado que no es compatible con los laboratorios de Academy
+- Utilizaremos como *región de trabajo* la región de *España* (~eu-south-2~)
+- Utilizaremos el servicio *EC2 Image Builder* para esta tarea.
+- Crea un *componente personalizado* basado en el siguiente documento, realizando los cambios que se indican a continuación:
+  #+begin_src yaml
+    name: DocumentoNOMBREAPELLIDOS
+    description: Documento de NOMBRE APELLIDOS
+    schemaVersion: 1.0
+    phases:
+      - name: build
+        steps:
+          - name: CrearCarpetaNOMBREAPELLIDOS
+            action: CreateFolder
+            inputs:
+              - path: /datos/
+          - name: DownloadRemoteFile
+            action: WebDownload
+            maxAttempts: 3
+            inputs:
+              - source: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+                destination: /datos/mifichero
+          # TODO: Añade aquí el paso para actualizar el sistema operativo
+          # Fuente: https://docs.aws.amazon.com/imagebuilder/latest/userguide/toe-action-modules.html#action-modules-updateos
+          # Deja el código comentado, dado que Amazon Linux 2023 no es compatible con esta acción
+      - name: test
+        steps:
+        - name: ComprobarFicheroNOMBREAPELLIDOS
+          action: ExecuteBash
+          inputs:
+            commands:
+              - |
+                if [ -f "/datos/mifichero" ];
+                then
+                  exit 0
+                else
+                  exit 1
+                fi
+  #+end_src
+  Sustituye ~NOMBRE~ y ~APELLIDOS~ por tu nombre y apellidos reales eliminando acentos y caracteres no ingleses (como la ~ñ~).
+  *Añade un paso* para *actualizar el sistema* operativo mediante la [[https://docs.aws.amazon.com/imagebuilder/latest/userguide/toe-action-modules.html#action-modules-updateos][acción UpdateOS]]. Deja el código *comentado*, dado que Amazon Linux 2023 no es compatible con esta acción.
+- Crea una *Receta de imagen* (/Image Recipe/) que utilice la AMI de *Amazon Linux 2023* más reciente como base y que *incluya el componente* personalizado creado en el paso anterior.
+- Crea una *Configuración de Infraestructura* (/Infrastructure Configuration/) que utilice el *rol creado en el apartado de prerrequisitos* (/IAM role/) y utilice instancias de tipo ~t3.micro~, ~t3.nano~ y ~t3.small~ (de esta manera el sistema tiene varios tamaños para elegir en caso de que haya problemas de capacidad de un tamaño concreto). En el apartado de *VPC, subnet and security groups*, selecciona la *VPC y la subred pública creadas en el apartado de prerrequisitos*; en el grupo de seguridad, selecciona el grupo por defecto.
+- Crea unos *Ajustes de Distribución* (/Distribution Settings/) que desplieguen la AMI en *dos regiones*: ~eu-south-2~ y ~us-east-1~.
+- Por último, crea un *pipeline* en el servicio *AWS Image Builder* para automatizar la creación y gestión de una AMI personalizada. Configúralo para que se active de manera *manual*. *Lanza una ejecución* del pipeline cuando lo hayas creado.
+  
+* Recomendaciones
+- Tienes un vídeo explicativo donde realizo una tarea similar a la propuesta
+
+* Comprobación del resultado
+Al finalizar el proceso, *lanza una máquina basada en la AMI creada* y comprueba que *existe el fichero* en la ruta ~/datos/mifichero~. Prueba también a *actualizar el sistema operativo* mediante ~sudo dnf upgrade~ y observa que el sistema está actualizado (no debería instalar ningún paquete o, como mucho, instalar algún paquete suelto si justo se acaba de liberar en ese momento).
+
+* Entrega
+Documenta la realización de la práctica explicando los pasos seguidos. Incluye las *capturas de pantalla* necesarias. Recuerda mostrar tus datos personales (nombre y apellidos) en aquellos apartados donde se indique.
+
+Adjunta captura donde se muestre el listado de AMIs de tu cuenta y aparezca la *AMI* creada con este proceso. Adjunta también capturas de los *logs de ejecución* del pipeline donde se muestre la ejecución de las acciones con tu nombre y apellidos.
+
+Incluye también en la memoria el *código YAML* del documento de componente que has creado para la práctica.
+
+* Limpieza
+Al finalizar, *elimina* la *máquina virtual* creada para comprobar el resultado.
+
+*No elimines* las *AMIs* creadas, ni los *snapshots* creados en las *dos regiones*, ni el *pipeline* de Image Builder hasta que te lo indique en la corrección. Una vez corregida la tarea, procede a eliminar dichos recursos.
