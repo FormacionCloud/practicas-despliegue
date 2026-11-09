@@ -49,6 +49,7 @@ Una vez configurado *AWS Config*, *crea una regla* dentro de dicho servicio que 
 #+begin_quote
 [!IMPORTANT]
 Asegúrate de seleccionar la sección ~Rules~ del menú de Config. No selecciones la subsección ~Rules~ dentro de la sección ~Aggregators~:
+
 [[./imagenes/config_rules.png]]
 #+end_quote
 
