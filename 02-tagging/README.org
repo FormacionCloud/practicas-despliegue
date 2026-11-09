@@ -37,7 +37,21 @@ Una vez creados los recursos, procederemos a su etiquetado para posterior gesti�
   - Instancias 1 y 3: ~key = TUS_INICIALES:envtype~, ~value = production~
 
 * Comprobación del correcto etiquetado con AWS Config
-Crea una regla en AWS Config que monitorice el correcto etiquetado de los recursos. Utiliza para ello la regla gestionada por AWS denominada ~required-tags~. Comprueba que se aplican los nombres de etiquetas ~TUS_INICIALES:project~, ~TUS_INICIALES:owner~, ~TUS_INICIALES:service~ y ~TUS_INICIALES:envtype~.
+#+begin_quote
+[!IMPORTANT]
+Si no has configurado Config previamente, deberás activarlo en la región donde lo vayas a usar. Para ello, deberás completar la configuración de *1-clic* dejando *todos los ajustes por defecto* y *no activando ninguna regla* durante este paso.
+
+Una vez completada la configuración, se activará el *Grabador* de Config para recopilar información de la cuenta. Recuerda que este grabador tiene un coste asociado por volumen de información ingerida.
+#+end_quote
+
+Una vez configurado *AWS Config*, *crea una regla* dentro de dicho servicio que monitorice el correcto etiquetado de los recursos. Utiliza para ello la regla gestionada por AWS denominada ~required-tags~. Comprueba que se aplican los nombres de etiquetas ~TUS_INICIALES:project~, ~TUS_INICIALES:owner~, ~TUS_INICIALES:service~ y ~TUS_INICIALES:envtype~.
+
+#+begin_quote
+[!IMPORTANT]
+Asegúrate de seleccionar la sección ~Rules~ del menú de Config. No selecciones la subsección ~Rules~ dentro de la sección ~Aggregators~:
+[[./imagenes/config_rules.png]]
+#+end_quote
+
 
 Comprueba el estado de la configuración y comenta los resultados.
 
@@ -82,3 +96,6 @@ Documenta la realización de la práctica explicando los pasos seguidos. Incluye
 
 * Limpieza
 Al finalizar, *elimina los recursos creados* en la práctica. Asegúrate de borrar las *instancias* y la *regla de AWS Config*.
+
+Por último, *desactiva la grabación de Config* para evitar incurrir en gastos adicionales:
+[[./imagenes/config_recording.png]]
