@@ -99,4 +99,5 @@ Documenta la realización de la práctica explicando los pasos seguidos. Incluye
 Al finalizar, *elimina los recursos creados* en la práctica. Asegúrate de borrar las *instancias* y la *regla de AWS Config*.
 
 Por último, *desactiva la grabación de Config* para evitar incurrir en gastos adicionales:
+
 [[./imagenes/config_recording.png]]
