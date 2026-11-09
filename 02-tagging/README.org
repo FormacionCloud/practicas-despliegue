@@ -69,7 +69,7 @@ De acuerdo con el ejemplo [[https://docs.aws.amazon.com/IAM/latest/UserGuide/ref
 
 #+begin_quote
 [!important]
-A partir de aquí, no podrás realizar las tareas si estás realizando la práctica en un *learner lab*. Los siguientes puntos solo funcionan si estás utilizando la *landing zone* o en una cuenta real. Si es tu caso, intenta responder a las preguntas planteadas sin implementar los pasos.
+A partir de aquí, no podrás realizar las tareas si estás realizando la práctica en un *learner lab*. Los siguientes puntos solo funcionan si estás utilizando la *landing zone* o una cuenta real. Si es tu caso, intenta responder a las preguntas planteadas sin realizar las tareas en la cuenta.
 #+end_quote
 
 - Crea un *rol* asociado a dicha política
