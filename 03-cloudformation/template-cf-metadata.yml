@@ -1,72 +1,62 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Plantilla para desplegar una pila LAMP en EC2. La máquina EC2 incluye una
-  base de datos MySQL, un servidor Apache y el lenguaje PHP.
+  base de datos MariaDB, un servidor Apache y el lenguaje PHP.
 Parameters:
   DBName:
     Default: MyDatabase
-    Description: MySQL database name
+    Description: Nombre de la base de datos de MariaDB
     Type: String
     MinLength: '1'
     MaxLength: '64'
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+    ConstraintDescription: debe comenzar con una letra y contener caracteres alfanuméricos
   DBUser:
     NoEcho: 'true'
-    Description: Username for MySQL database access
+    Description: Nombre de usuario de la base de datos
     Type: String
     MinLength: '1'
     MaxLength: '16'
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
+    ConstraintDescription: debe comenzar con una letra y contener caracteres alfanuméricos
   DBPassword:
     NoEcho: 'true'
-    Description: Password for MySQL database access
+    Description: Password para la base de datos
     Type: String
     MinLength: '1'
     MaxLength: '41'
     AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: must contain only alphanumeric characters.
+    ConstraintDescription: debe comenzar con una letra y contener caracteres alfanuméricos
   DBRootPassword:
     NoEcho: 'true'
-    Description: Root password for MySQL
+    Description: Password de root para la base de datos
     Type: String
     MinLength: '1'
     MaxLength: '41'
     AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: must contain only alphanumeric characters.
+    ConstraintDescription: debe comenzar con una letra y contener caracteres alfanuméricos
   InstanceType:
-    Description: WebServer EC2 instance type
+    Description: Tipo de instancia
     Type: String
-    Default: t3.small
+    Default: t3.micro
     AllowedValues:
       - t3.nano
       - t3.micro
       - t3.small
-    ConstraintDescription: must be a valid EC2 instance type.
   SSHLocation:
-    Description: ' The IP address range that can be used to SSH to the EC2 instances'
+    Description: Rango de IPs desde las que conectarse por SSH a la instancia
     Type: String
     MinLength: '9'
     MaxLength: '18'
     Default: 0.0.0.0/0
     AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
-    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    ConstraintDescription: debe cumplir el formato CIDR, x.x.x.x/x.
 Mappings:
-  AWSInstanceType2Arch:
-    t2.nano:
-      Arch: HVM64
-    t2.micro:
-      Arch: HVM64
-    t2.small:
-      Arch: HVM64
-  AWSRegionArch2AMI:
+  RegionToAMI:
     us-east-1:
-      HVM64: ami-032930428bf1abbff
-      HVMG2: ami-0aeb704d503081ea6
-    us-west-1:
-      HVM64: ami-088c153f74339f34c
-      HVMG2: ami-0a7fc72dc0e51aa77
+      AMI: ami-0aacbf72109c53c0c
+    us-west-2:
+      AMI: ami-09f6e62a9fe578f92
 Resources:
   WebServerInstance:
     Type: AWS::EC2::Instance
@@ -79,138 +69,87 @@ Resources:
         Install:
           packages:
             yum:
-              mysql: []
-              mysql-server: []
-              mysql-libs: []
+              mariadb105: []
+              mariadb105-server: []
               httpd: []
-              php: []
-              php-mysql: []
+              php8.5: []
+              php8.5-mysqlnd: []
           files:
             /var/www/html/index.php:
-              content: !Join 
-                - ''
-                - - |
+              content: !Sub |
                     <html>
-                  - |2
                       <head>
-                  - |2
-                        <title>AWS CloudFormation PHP Sample</title>
-                  - |2
-                        <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-                  - |2
+                        <title>Practica de CloudFormation</title>
+                        <meta charset="UTF-8">
                       </head>
-                  - |2
                       <body>
-                  - |2
-                        <h1>Welcome to the AWS CloudFormation PHP Sample</h1>
-                  - |2
+                        <h1>Bienvenido a la practica de CloudFormation!</h1>
                         <p/>
-                  - |2
                         <?php
-                  - |2
-                          // Print out the current data and time
-                  - |2
-                          print "The Current Date and Time is: <br/>";
-                  - |2
+                          print "La fecha actual es: <br/>";
                           print date("g:i A l, F j Y.");
-                  - |2
                         ?>
-                  - |2
                         <p/>
-                  - |2
                         <?php
-                  - |2
+                          // Get IMDSv2 token
+                          $token_handle = curl_init();
+                          curl_setopt($token_handle, CURLOPT_URL, 'http://169.254.169.254/latest/api/token');
+                          curl_setopt($token_handle, CURLOPT_RETURNTRANSFER, 1);
+                          curl_setopt($token_handle, CURLOPT_CONNECTTIMEOUT, 2);
+                          curl_setopt($token_handle, CURLOPT_HTTPHEADER, ['X-aws-ec2-metadata-token-ttl-seconds: 21600']);
+                          curl_setopt($token_handle, CURLOPT_CUSTOMREQUEST, 'PUT');
+                          $token = curl_exec($token_handle);
+                          curl_close($token_handle);
+                          $imds_headers = ['X-aws-ec2-metadata-token: ' . $token];
+
                           // Setup a handle for CURL
-                  - |2
                           $curl_handle=curl_init();
-                  - |2
                           curl_setopt($curl_handle,CURLOPT_CONNECTTIMEOUT,2);
-                  - |2
                           curl_setopt($curl_handle,CURLOPT_RETURNTRANSFER,1);
-                  - |2
+                          curl_setopt($curl_handle, CURLOPT_HTTPHEADER, $imds_headers);
                           // Get the hostname of the intance from the instance metadata
-                  - |2
                           curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/public-hostname');
-                  - |2
                           $hostname = curl_exec($curl_handle);
-                  - |2
                           if (empty($hostname))
-                  - |2
                           {
-                  - |2
                             print "Sorry, for some reason, we got no hostname back <br />";
-                  - |2
                           }
-                  - |2
                           else
-                  - |2
                           {
-                  - |2
                             print "Server = " . $hostname . "<br />";
-                  - |2
                           }
-                  - |2
                           // Get the instance-id of the intance from the instance metadata
-                  - |2
                           curl_setopt($curl_handle,CURLOPT_URL,'http://169.254.169.254/latest/meta-data/instance-id');
-                  - |2
+                          curl_setopt($curl_handle, CURLOPT_HTTPHEADER, $imds_headers);
                           $instanceid = curl_exec($curl_handle);
-                  - |2
                           if (empty($instanceid))
-                  - |2
                           {
-                  - |2
-                            print "Sorry, for some reason, we got no instance id back <br />";
-                  - |2
+                            print "Error al buscar el id de la instancia <br />";
                           }
-                  - |2
                           else
-                  - |2
                           {
-                  - |2
-                            print "EC2 instance-id = " . $instanceid . "<br />";
-                  - |2
+                            print "Id de la instancia = " . $instanceid . "<br />";
                           }
-                  - |2
                           $Database   = "localhost";
-                  - '      $DBUser     = "'
-                  - !Ref DBUser
-                  - |
-                    ";
-                  - '      $DBPassword = "'
-                  - !Ref DBPassword
-                  - |
-                    ";
-                  - |2
+                          $DBUser = "${DBUser}";
+                          $DBPassword = "${DBPassword}";
                           print "Database = " . $Database . "<br />";
-                  - |2
-                          $dbconnection = mysql_connect($Database, $DBUser, $DBPassword)
-                  - |2
-                                          or die("Could not connect: " . mysql_error());
-                  - |2
-                          print ("Connected to $Database successfully");
-                  - |2
-                          mysql_close($dbconnection);
-                  - |2
+                          $dbconnection = mysqli_connect($Database, $DBUser, $DBPassword)
+                            or die("Could not connect: " . mysqli_connect_error());
+                          print ("Conectado a $Database con exito");
+                          mysqli_close($dbconnection);
                         ?>
-                  - |2
-                        <h2>PHP Information</h2>
-                  - |2
+                        <h2>Informacion de PHP</h2>
                         <p/>
-                  - |2
                         <?php
-                  - |2
                           phpinfo();
-                  - |2
                         ?>
-                  - |2
                       </body>
-                  - |
                     </html>
               mode: '000600'
               owner: apache
               group: apache
-            /tmp/setup.mysql:
+            /tmp/setup.sql:
               content: !Sub |
                 CREATE DATABASE ${DBName};
                 GRANT ALL ON ${DBName}.* TO '${DBUser}'@localhost IDENTIFIED BY '${DBPassword}';
@@ -237,8 +176,8 @@ Resources:
               owner: root
               group: root
           services:
-            sysvinit:
-              mysqld:
+            systemd:
+              mariadb:
                 enabled: 'true'
                 ensureRunning: 'true'
               httpd:
@@ -253,32 +192,29 @@ Resources:
                   - /etc/cfn/hooks.d/cfn-auto-reloader.conf
         Configure:
           commands:
-            01_set_mysql_root_password:
+            01_set_mariadb_root_password:
               command: !Sub |-
                 mysqladmin -u root password '${DBRootPassword}'
               test: !Sub |-
                 $(mysql ${DBName} -u root --password='${DBRootPassword}' >/dev/null 2>&1 </dev/null); (( $? != 0 ))
             02_create_database:
               command: !Sub |-
-                mysql -u root --password='${DBRootPassword}' < /tmp/setup.mysql
+                mysql -u root --password='${DBRootPassword}' < /tmp/setup.sql
               test: !Sub |-
                 $(mysql ${DBName} -u root --password='${DBRootPassword}' >/dev/null 2>&1 </dev/null); (( $? != 0 ))
     Properties:
       IamInstanceProfile: LabInstanceProfile
       ImageId: !FindInMap 
-        - AWSRegionArch2AMI
+        - RegionToAMI
         - !Ref 'AWS::Region'
-        - !FindInMap 
-          - AWSInstanceType2Arch
-          - !Ref InstanceType
-          - Arch
+        - AMI
       InstanceType: !Ref InstanceType
       SecurityGroups:
         - !Ref WebServerSecurityGroup
       UserData: !Base64
         Fn::Sub: |-
           #!/bin/bash -xe
-          yum update -y aws-cfn-bootstrap
+          dnf update -y aws-cfn-bootstrap
           # Aplicar la configuración definida en la sección Metadata
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --configsets InstallAndRun --region ${AWS::Region}
           # Enviar señal a CloudFormation con el código de éxito/error del comando cfn-init
