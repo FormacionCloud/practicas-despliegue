@@ -38,11 +38,11 @@ Parameters:
   InstanceType:
     Description: WebServer EC2 instance type
     Type: String
-    Default: t2.small
+    Default: t3.small
     AllowedValues:
-      - t2.nano
-      - t2.micro
-      - t2.small
+      - t3.nano
+      - t3.micro
+      - t3.small
     ConstraintDescription: must be a valid EC2 instance type.
   SSHLocation:
     Description: ' The IP address range that can be used to SSH to the EC2 instances'
@@ -264,7 +264,7 @@ Resources:
               test: !Sub |-
                 $(mysql ${DBName} -u root --password='${DBRootPassword}' >/dev/null 2>&1 </dev/null); (( $? != 0 ))
     Properties:
-      IamInstanceProfile: !Ref MyInstanceProfile
+      IamInstanceProfile: LabInstanceProfile
       ImageId: !FindInMap 
         - AWSRegionArch2AMI
         - !Ref 'AWS::Region'
@@ -286,12 +286,6 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Timeout: PT5M
-  MyInstanceProfile:
-    Type: "AWS::IAM::InstanceProfile"
-    Properties: 
-      Path: "/"
-      Roles: 
-        - "LabRole"
   WebServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
