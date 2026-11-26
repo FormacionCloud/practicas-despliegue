@@ -26,6 +26,11 @@ Esta práctica la realizaremos en la *Landing Zone*. Crea los siguientes recurso
 - Arranca el stress en las instancias mediante el comando ~stress -c 5~. De esta manera podremos visualizar un aumento en el uso de CPU en las métricas
 
 * Etiquetado y agrupación de recursos
+#+begin_quote
+[!IMPORTANT]
+Si estás haciendo la práctica en un learner lab, no tendrás permisos para utilizar el servicio de Resource Explorer. En ese caso, deberás etiquetar los recursos manualmente, accediendo a cada uno de ellos y creando las etiquetas correspondientes.
+#+end_quote
+
 Una vez creados los recursos, procederemos a su etiquetado para posterior gestión. Para ello, realiza los siguientes pasos:
 - Accede al servicio *AWS Resource Explorer* en la consola
 - Filtra los recursos del servicio EC2 mediante el filtro ~service=ec2~
